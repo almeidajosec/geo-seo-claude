@@ -1,223 +1,92 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="GEO-SEO Claude Code Skill" width="900"/>
+  <img src="assets/banner.svg" alt="Prompt-Ready GEO Toolkit" width="900"/>
 </p>
 
 <p align="center">
-  <strong>GEO-first, SEO-supported.</strong> Optimize websites for AI-powered search engines<br/>
-  (ChatGPT, Claude, Perplexity, Gemini, Google AI Overviews) while maintaining traditional SEO foundations.
-</p>
-
-<p align="center">
-  AI search is eating traditional search. This tool optimizes for where traffic is going, not where it was.
+  <strong>Prompt-Ready GEO Toolkit</strong> — LLM-Readiness audits for Claude Code.<br/>
+  Five dimensions, 100 points, evidence-labelled, reproducible month to month.
 </p>
 
 ---
 
-## Why GEO Matters (2026)
+## What it does
 
-| Metric | Value |
-|--------|-------|
-| GEO services market | $850M+ (projected $7.3B by 2031) |
-| AI-referred traffic growth | +527% year-over-year |
-| AI traffic conversion rate vs organic | 4.4x higher |
-| Gartner: search traffic drop by 2028 | -50% |
-| Brand mentions vs backlinks for AI | 3x stronger correlation |
-| Marketers investing in GEO | Only 23% |
+Audits how visible and citable a website is to AI search engines (ChatGPT,
+Claude, Perplexity, Google AI Overviews, Gemini, Copilot) and produces a
+client-ready **LLM-Readiness Report** using the same scoring model as the
+automated Prompt-Ready report, so any site can be tracked on one scale.
 
----
+| Dimension | Points |
+|---|---|
+| A. Structure & Navigation | 20 |
+| B. Content Quality | 20 |
+| C. Technical SEO for LLMs | 20 |
+| D. AI-Specific Readiness | 20 |
+| E. Brand Entity & Authority | 20 |
 
-## Quick Start
+Each dimension = **14 measured points** (deterministic checks on fetched data:
+HTML, headers, robots, sitemap, PageSpeed, Wikidata, live AI answers) +
+**6 assessed points** (model judgement against a published rubric). The rubric
+is in [`geo/scoring.md`](geo/scoring.md) and is appended to every report.
 
-### One-Command Install (macOS/Linux)
+## Principles
+
+- **One scoring model.** `geo/scoring.md` is the only place weights, checks and
+  labels are defined. Total always equals the sum of the five dimensions.
+- **Measured before assessed.** A collector (`scripts/fetch_page.py` + PageSpeed,
+  Wikidata, Playwright, live engine queries) produces `audit-data.json`; agents
+  score that file. Nothing is scored from inference.
+- **Every line labelled** Measured / Assessed / Unverifiable.
+- **No invented numbers.** Market statistics only from `geo/references.md`
+  when verified; no € or traffic projections without the client's own data.
+
+## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/zubair-trabzada/geo-seo-claude/main/install.sh | bash
+git clone <this repo> && cd geo-projects
+./install.sh          # copies geo/, skills/, agents/, scripts/, schema/ to ~/.claude
+pip install -r requirements.txt
 ```
 
-### Manual Install
-
-```bash
-git clone https://github.com/zubair-trabzada/geo-seo-claude.git
-cd geo-seo-claude
-./install.sh
-```
-
-### Requirements
-
-- Python 3.8+
-- Claude Code CLI
-- Git
-- Optional: Playwright (for screenshots)
-
----
+Edit `geo/config.md` (brand, language, pricing) before producing proposals.
 
 ## Commands
 
-Open Claude Code and use these commands:
+| Command | Output |
+|---|---|
+| `/geo audit <url>` | `geo-reports/<domain>/GEO-AUDIT-<date>.md`, `audit-data.json`, `scores.json` |
+| `/geo quick <url>` | Measured checks only (out of 70), inline |
+| `/geo visibility <url>` | Live AI visibility test: 3 questions × ChatGPT, Claude, Perplexity |
+| `/geo citability` · `crawlers` · `llmstxt` · `brands` · `schema` · `technical` · `content` | Single-dimension deep dives |
+| `/geo report <domain>` | Client report (business language) from `scores.json` |
+| `/geo report-pdf <domain>` | A4 PDF, Prompt-Ready palette |
+| `/geo proposal <domain>` | Proposal; prices from `geo/config.md` |
+| `/geo compare <domain>` | Check-by-check progress report between two audits |
 
-| Command | What It Does |
-|---------|-------------|
-| `/geo audit <url>` | Full GEO + SEO audit with parallel subagents |
-| `/geo quick <url>` | 60-second GEO visibility snapshot |
-| `/geo citability <url>` | Score content for AI citation readiness |
-| `/geo crawlers <url>` | Check AI crawler access (robots.txt) |
-| `/geo llmstxt <url>` | Analyze or generate llms.txt |
-| `/geo brands <url>` | Scan brand mentions across AI-cited platforms |
-| `/geo platforms <url>` | Platform-specific optimization |
-| `/geo schema <url>` | Structured data analysis & generation |
-| `/geo technical <url>` | Technical SEO audit |
-| `/geo content <url>` | Content quality & E-E-A-T assessment |
-| `/geo report <url>` | Generate client-ready GEO report |
-| `/geo report-pdf` | Generate professional PDF report with charts & visualizations |
-
----
-
-## Architecture
+## Layout
 
 ```
-geo-seo-claude/
-├── geo/                          # Main skill orchestrator
-│   └── SKILL.md                  # Primary skill file with commands & routing
-├── skills/                       # 11 specialized sub-skills
-│   ├── geo-audit/                # Full audit orchestration & scoring
-│   ├── geo-citability/           # AI citation readiness scoring
-│   ├── geo-crawlers/             # AI crawler access analysis
-│   ├── geo-llmstxt/              # llms.txt standard analysis & generation
-│   ├── geo-brand-mentions/       # Brand presence on AI-cited platforms
-│   ├── geo-platform-optimizer/   # Platform-specific AI search optimization
-│   ├── geo-schema/               # Structured data for AI discoverability
-│   ├── geo-technical/            # Technical SEO foundations
-│   ├── geo-content/              # Content quality & E-E-A-T
-│   ├── geo-report/               # Client-ready markdown report generation
-│   └── geo-report-pdf/           # Professional PDF report with charts
-├── agents/                       # 5 parallel subagents
-│   ├── geo-ai-visibility.md      # GEO audit, citability, crawlers, brands
-│   ├── geo-platform-analysis.md  # Platform-specific optimization
-│   ├── geo-technical.md          # Technical SEO analysis
-│   ├── geo-content.md            # Content & E-E-A-T analysis
-│   └── geo-schema.md             # Schema markup analysis
-├── scripts/                      # Python utilities
-│   ├── fetch_page.py             # Page fetching & parsing
-│   ├── citability_scorer.py      # AI citability scoring engine
-│   ├── brand_scanner.py          # Brand mention detection
-│   ├── llmstxt_generator.py      # llms.txt validation & generation
-│   └── generate_pdf_report.py    # PDF report generator (ReportLab)
-├── schema/                       # JSON-LD templates
-│   ├── organization.json         # Organization schema (with sameAs)
-│   ├── local-business.json       # LocalBusiness schema
-│   ├── article-author.json       # Article + Person schema (E-E-A-T)
-│   ├── software-saas.json        # SoftwareApplication schema
-│   ├── product-ecommerce.json    # Product schema with offers
-│   └── website-searchaction.json # WebSite + SearchAction schema
-├── install.sh                    # One-command installer
-├── uninstall.sh                  # Uninstaller
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+geo/
+  SKILL.md        orchestrator: pipeline, commands, scores.json format
+  scoring.md      THE scoring model (v3.0)
+  config.md       brand, language, pricing, paths
+  references.md   statistics register (verified / unverified / refuted)
+agents/           five thin dimension agents (A-E) — input audit-data.json, output JSON
+skills/           method and recommendation guidance per topic + report templates
+scripts/          fetch_page.py (collector), citability_scorer.py, brand_scanner.py,
+                  generate_pdf_report.py (A4, v3)
+schema/           JSON-LD templates
+docs/             prompt-ready-engine-spec.md — change spec for the automated report
+_legacy/          v2 six-category agents/skills, kept for reference, not installed
 ```
 
----
+## Monitoring
 
-## How It Works
+Every run writes `geo-reports/<domain>/scores.json`. `/geo compare` diffs two
+of them check by check. Audits made with the v2 model are not comparable; the
+first v3 run becomes the new baseline.
 
-### Full Audit Flow
+## Licence
 
-When you run `/geo audit https://example.com`:
-
-1. **Discovery** — Fetches homepage, detects business type, crawls sitemap
-2. **Parallel Analysis** — Launches 5 subagents simultaneously:
-   - AI Visibility (citability, crawlers, llms.txt, brand mentions)
-   - Platform Analysis (ChatGPT, Perplexity, Google AIO readiness)
-   - Technical SEO (Core Web Vitals, SSR, security, mobile)
-   - Content Quality (E-E-A-T, readability, freshness)
-   - Schema Markup (detection, validation, generation)
-3. **Synthesis** — Aggregates scores, generates composite GEO Score (0-100)
-4. **Report** — Outputs prioritized action plan with quick wins
-
-### Scoring Methodology
-
-| Category | Weight |
-|----------|--------|
-| AI Citability & Visibility | 25% |
-| Brand Authority Signals | 20% |
-| Content Quality & E-E-A-T | 20% |
-| Technical Foundations | 15% |
-| Structured Data | 10% |
-| Platform Optimization | 10% |
-
----
-
-## Key Features
-
-### Citability Scoring
-Analyzes content blocks for AI citation readiness. Optimal AI-cited passages are 134-167 words, self-contained, fact-rich, and directly answer questions.
-
-### AI Crawler Analysis
-Checks robots.txt for 14+ AI crawlers (GPTBot, ClaudeBot, PerplexityBot, etc.) and provides specific allow/block recommendations.
-
-### Brand Mention Scanning
-Brand mentions correlate 3x more strongly with AI visibility than backlinks. Scans YouTube, Reddit, Wikipedia, LinkedIn, and 7+ other platforms.
-
-### Platform-Specific Optimization
-Only 11% of domains are cited by both ChatGPT and Google AI Overviews for the same query. Provides tailored recommendations per platform.
-
-### llms.txt Generation
-Generates the emerging llms.txt standard file that helps AI crawlers understand your site structure.
-
-### Client-Ready Reports
-Generates professional GEO reports in markdown or PDF format. PDF reports include score gauges, bar charts, platform readiness visualizations, color-coded tables, and prioritized action plans — ready to deliver to clients.
-
----
-
-## Use Cases
-
-- **GEO Agencies** — Run client audits and generate deliverables
-- **Marketing Teams** — Monitor and improve AI search visibility
-- **Content Creators** — Optimize content for AI citations
-- **Local Businesses** — Get found by AI assistants
-- **SaaS Companies** — Improve entity recognition across AI platforms
-- **E-commerce** — Optimize product pages for AI shopping recommendations
-
----
-
-## Uninstall
-
-```bash
-./uninstall.sh
-```
-
-Or manually:
-```bash
-rm -rf ~/.claude/skills/geo ~/.claude/skills/geo-* ~/.claude/agents/geo-*.md
-```
-
----
-
-## Want to Turn This Into a Business?
-
-The tool is free. Learning how to monetize it is where the community comes in.
-
-**[Join the AI Workshop Community →](https://skool.com/aiworkshop)**
-
-Inside you'll get:
-- **Video walkthroughs** — Step-by-step setup, running audits, reading results
-- **Client acquisition playbook** — How to find prospects, pitch GEO services, and close deals
-- **Live office hours** — Bring your audit results, get direct help
-- **GEO agency pricing & templates** — Proposal docs, cold outreach scripts, onboarding workflows
-
-GEO agencies charge $2K–$12K/month. This tool does the audit. The community teaches you how to sell it.
-
----
-
-## License
-
-MIT License
-
----
-
-## Contributing
-
-Contributions welcome!
-
----
-
-Built for the AI search era.
+See `LICENSE`. Originally derived from an open-source GEO toolkit; scoring model,
+agents, report templates and engine spec rewritten for Prompt-Ready (v3.0, Nov 2026).

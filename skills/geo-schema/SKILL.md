@@ -6,6 +6,14 @@ author: geo-seo-claude
 tags: [geo, schema, structured-data, json-ld, entity-recognition, ai-discoverability]
 ---
 
+> **Scoring (v3.0):** the only scores that enter any report are the checks defined in
+> `geo/scoring.md` (five dimensions × 20 points). The point tables, weights and score
+> labels that remain in this file are **legacy analysis guidance** — use them to decide
+> what to look at and how to write recommendations, never to produce a score. Statistics
+> quoted in this file are **not verified**; see `geo/references.md` before using any of
+> them in client output. Fetch data with `scripts/fetch_page.py`, not WebFetch, for any
+> measured check.
+
 # GEO Schema & Structured Data
 
 ## Purpose
@@ -19,7 +27,7 @@ Structured data is the primary machine-readable signal that tells AI systems wha
 3. Validate detected schemas against Schema.org specifications
 4. Identify missing recommended schemas based on business type
 5. Generate ready-to-use JSON-LD code blocks
-6. Output GEO-SCHEMA-REPORT.md
+6. Output geo-reports/GEO-SCHEMA-REPORT.md
 
 ---
 
@@ -326,7 +334,7 @@ Based on the detected business type, generate ready-to-paste JSON-LD blocks. Alw
 
 ## Output Format
 
-Generate **GEO-SCHEMA-REPORT.md** with:
+Generate **geo-reports/GEO-SCHEMA-REPORT.md** with:
 
 ```markdown
 # GEO Schema & Structured Data Report — [Domain]

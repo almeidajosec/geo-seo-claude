@@ -58,3 +58,5 @@ test_output/
 # OS
 Thumbs.db
 .DS_Store
+.claude/
+~$*

@@ -28,6 +28,7 @@ from datetime import datetime
 
 try:
     from reportlab.lib.pagesizes import letter, A4
+    PAGE = A4
     from reportlab.lib.units import inch, mm
     from reportlab.lib.colors import (
         HexColor, black, white, grey, lightgrey, darkgrey,
@@ -51,10 +52,10 @@ except ImportError:
 # ============================================================
 # COLOR PALETTE
 # ============================================================
-PRIMARY = HexColor("#1a1a2e")       # Dark navy
+PRIMARY = HexColor("#111827")       # Prompt-Ready dark
 SECONDARY = HexColor("#16213e")     # Slightly lighter navy
-ACCENT = HexColor("#0f3460")        # Blue accent
-HIGHLIGHT = HexColor("#e94560")     # Red/coral highlight
+ACCENT = HexColor("#4F46E5")        # Prompt-Ready indigo
+HIGHLIGHT = HexColor("#F97316")     # Prompt-Ready orange accent
 SUCCESS = HexColor("#00b894")       # Green
 WARNING = HexColor("#fdcb6e")       # Yellow/amber
 DANGER = HexColor("#d63031")        # Red
@@ -81,16 +82,16 @@ def get_score_color(score):
 
 def get_score_label(score):
     """Return label based on score value."""
-    if score >= 85:
-        return "Excellent"
-    elif score >= 70:
+    if score >= 80:
+        return "Strong"
+    elif score >= 60:
         return "Good"
-    elif score >= 55:
-        return "Moderate"
     elif score >= 40:
-        return "Below Average"
+        return "Developing"
+    elif score >= 20:
+        return "Weak"
     else:
-        return "Needs Attention"
+        return "Critical"
 
 
 def create_score_gauge(score, width=120, height=120):
@@ -307,23 +308,23 @@ def header_footer(canvas, doc):
     # Header line
     canvas.setStrokeColor(ACCENT)
     canvas.setLineWidth(2)
-    canvas.line(50, letter[1] - 40, letter[0] - 50, letter[1] - 40)
+    canvas.line(50, PAGE[1] - 40, PAGE[0] - 50, PAGE[1] - 40)
 
     # Header text
     canvas.setFont('Helvetica', 8)
     canvas.setFillColor(TEXT_SECONDARY)
-    canvas.drawString(50, letter[1] - 35, "GEO-SEO Analysis Report")
+    canvas.drawString(50, PAGE[1] - 35, "Prompt-Ready · LLM-Readiness Report · scoring model v3.0")
 
     # Footer
     canvas.setStrokeColor(lightgrey)
     canvas.setLineWidth(0.5)
-    canvas.line(50, 40, letter[0] - 50, 40)
+    canvas.line(50, 40, PAGE[0] - 50, 40)
 
     canvas.setFont('Helvetica', 8)
     canvas.setFillColor(TEXT_SECONDARY)
     canvas.drawString(50, 28, f"Generated {datetime.now().strftime('%B %d, %Y')}")
-    canvas.drawRightString(letter[0] - 50, 28, f"Page {doc.page}")
-    canvas.drawCentredString(letter[0] / 2, 28, "Confidential")
+    canvas.drawRightString(PAGE[0] - 50, 28, f"Page {doc.page}")
+    canvas.drawCentredString(PAGE[0] / 2, 28, "Confidential")
 
     canvas.restoreState()
 
@@ -355,7 +356,7 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
 
     doc = SimpleDocTemplate(
         output_path,
-        pagesize=letter,
+        pagesize=PAGE,
         topMargin=55,
         bottomMargin=55,
         leftMargin=50,
@@ -371,21 +372,22 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
     date = data.get("date", datetime.now().strftime("%Y-%m-%d"))
     geo_score = data.get("geo_score", 0)
 
+    # v3.0 scoring model: five dimensions x 20 points (see geo/scoring.md)
     scores = data.get("scores", {})
-    ai_citability = scores.get("ai_citability", 0)
-    brand_authority = scores.get("brand_authority", 0)
-    content_eeat = scores.get("content_eeat", 0)
-    technical = scores.get("technical", 0)
-    schema_score = scores.get("schema", 0)
-    platform_optimization = scores.get("platform_optimization", 0)
+    DIMENSIONS = [
+        ("A", "structure", "Structure & Navigation"),
+        ("B", "content", "Content Quality"),
+        ("C", "technical", "Technical SEO for LLMs"),
+        ("D", "ai_readiness", "AI-Specific Readiness"),
+        ("E", "brand", "Brand Entity & Authority"),
+    ]
+    dim_scores = {key: int(scores.get(key, 0)) for _, key, _ in DIMENSIONS}
+    computed_total = sum(dim_scores.values())
+    if geo_score != computed_total:
+        print(f"WARNING: geo_score {geo_score} != sum of dimensions {computed_total}; using the sum.")
+        geo_score = computed_total
 
-    platforms = data.get("platforms", {
-        "Google AI Overviews": 0,
-        "ChatGPT": 0,
-        "Perplexity": 0,
-        "Gemini": 0,
-        "Bing Copilot": 0,
-    })
+    platforms = data.get("platforms", {})  # optional; omitted in v3 reports
 
     crawlers = data.get("crawlers", [])
     findings = data.get("findings", [])
@@ -480,16 +482,11 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
     elements.append(Paragraph("GEO Score Breakdown", styles['SectionHeader']))
     elements.append(HRFlowable(width="100%", thickness=1, color=ACCENT, spaceAfter=12))
 
-    score_data = [
-        ["Component", "Score", "Weight", "Weighted"],
-        ["AI Citability & Visibility", f"{ai_citability}/100", "25%", f"{round(ai_citability * 0.25, 1)}"],
-        ["Brand Authority Signals", f"{brand_authority}/100", "20%", f"{round(brand_authority * 0.20, 1)}"],
-        ["Content Quality & E-E-A-T", f"{content_eeat}/100", "20%", f"{round(content_eeat * 0.20, 1)}"],
-        ["Technical Foundations", f"{technical}/100", "15%", f"{round(technical * 0.15, 1)}"],
-        ["Structured Data", f"{schema_score}/100", "10%", f"{round(schema_score * 0.10, 1)}"],
-        ["Platform Optimization", f"{platform_optimization}/100", "10%", f"{round(platform_optimization * 0.10, 1)}"],
-        ["OVERALL", f"{geo_score}/100", "100%", f"{geo_score}"],
-    ]
+    score_data = [["Dimension", "Score", "Label", ""]]
+    for code, key, label in DIMENSIONS:
+        v = dim_scores[key]
+        score_data.append([f"{code}. {label}", f"{v}/20", get_score_label(v * 5), ""])
+    score_data.append(["TOTAL", f"{geo_score}/100", get_score_label(geo_score), ""])
 
     score_table = Table(score_data, colWidths=[200, 80, 60, 80])
     style = make_table_style()
@@ -500,7 +497,7 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
 
     # Color-code score cells
     for i in range(1, len(score_data) - 1):
-        score_val = int(score_data[i][1].split("/")[0])
+        score_val = int(score_data[i][1].split("/")[0]) * 5
         color = get_score_color(score_val)
         style.add('TEXTCOLOR', (1, i), (1, i), color)
 
@@ -510,8 +507,8 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
     elements.append(Spacer(1, 16))
 
     # Score bar chart
-    chart_scores = [ai_citability, brand_authority, content_eeat, technical, schema_score, platform_optimization]
-    chart_labels = ["Citability", "Brand", "Content", "Technical", "Schema", "Platform"]
+    chart_scores = [dim_scores[key] * 5 for _, key, _ in DIMENSIONS]  # scaled to 100 for the chart
+    chart_labels = ["Structure", "Content", "Technical", "AI Readiness", "Brand"]
     elements.append(create_bar_chart(chart_scores, chart_labels))
 
     elements.append(PageBreak())
@@ -519,38 +516,39 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
     # ============================================================
     # AI PLATFORM READINESS
     # ============================================================
-    elements.append(Paragraph("AI Platform Readiness", styles['SectionHeader']))
-    elements.append(HRFlowable(width="100%", thickness=1, color=ACCENT, spaceAfter=12))
+    if platforms:  # legacy v2 data only; v3 reports carry the live visibility test instead
+        elements.append(Paragraph("AI Platform Readiness", styles['SectionHeader']))
+        elements.append(HRFlowable(width="100%", thickness=1, color=ACCENT, spaceAfter=12))
 
-    elements.append(Paragraph(
-        "These scores reflect how likely your content is to be cited by each AI search platform. "
-        "A score below 50 indicates significant barriers to citation on that platform.",
-        styles['BodyText_Custom']
-    ))
-    elements.append(Spacer(1, 10))
+        elements.append(Paragraph(
+            "These scores reflect how likely your content is to be cited by each AI search platform. "
+            "A score below 50 indicates significant barriers to citation on that platform.",
+            styles['BodyText_Custom']
+        ))
+        elements.append(Spacer(1, 10))
 
-    # Platform chart
-    if platforms:
-        elements.append(create_platform_chart(platforms))
+        # Platform chart
+        if platforms:
+            elements.append(create_platform_chart(platforms))
 
-    elements.append(Spacer(1, 10))
+        elements.append(Spacer(1, 10))
 
-    # Platform table
-    platform_table_data = [["AI Platform", "Score", "Status"]]
-    for name, score in platforms.items():
-        status = get_score_label(score)
-        platform_table_data.append([name, f"{score}/100", status])
+        # Platform table
+        platform_table_data = [["AI Platform", "Score", "Status"]]
+        for name, score in platforms.items():
+            status = get_score_label(score)
+            platform_table_data.append([name, f"{score}/100", status])
 
-    pt = Table(platform_table_data, colWidths=[180, 80, 150])
-    pt_style = make_table_style()
-    for i in range(1, len(platform_table_data)):
-        score_val = int(platform_table_data[i][1].split("/")[0])
-        color = get_score_color(score_val)
-        pt_style.add('TEXTCOLOR', (1, i), (1, i), color)
-    pt.setStyle(pt_style)
-    elements.append(pt)
+        pt = Table(platform_table_data, colWidths=[180, 80, 150])
+        pt_style = make_table_style()
+        for i in range(1, len(platform_table_data)):
+            score_val = int(platform_table_data[i][1].split("/")[0])
+            color = get_score_color(score_val)
+            pt_style.add('TEXTCOLOR', (1, i), (1, i), color)
+        pt.setStyle(pt_style)
+        elements.append(pt)
 
-    elements.append(PageBreak())
+        elements.append(PageBreak())
 
     # ============================================================
     # AI CRAWLER ACCESS
@@ -625,8 +623,8 @@ def generate_report(data, output_path="GEO-REPORT.pdf"):
                     Paragraph("", cell_style),
                 ])
 
-        # Full page width: letter (612pt) - 50pt margins each side = 512pt
-        ct = Table(crawler_data, colWidths=[90, 110, 72, 240])
+        # Full page width: A4 (595pt) - 50pt margins each side = 495pt
+        ct = Table(crawler_data, colWidths=[90, 110, 72, 223])
         ct_style = make_table_style()
         ct_style.add('VALIGN', (0, 0), (-1, -1), 'TOP')
 
@@ -842,12 +840,11 @@ if __name__ == "__main__":
             "date": datetime.now().strftime("%Y-%m-%d"),
             "geo_score": 58,
             "scores": {
-                "ai_citability": 45,
-                "brand_authority": 62,
-                "content_eeat": 70,
-                "technical": 55,
-                "schema": 30,
-                "platform_optimization": 48,
+                "structure": 9,
+                "content": 12,
+                "technical": 11,
+                "ai_readiness": 8,
+                "brand": 6,
             },
             "platforms": {
                 "Google AI Overviews": 65,

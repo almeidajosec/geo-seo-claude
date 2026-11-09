@@ -1,163 +1,73 @@
 ---
 name: geo-report-pdf
-description: Generate a professional PDF report from GEO audit data using ReportLab. Creates a polished, client-ready PDF with score gauges, bar charts, platform readiness visualizations, color-coded tables, and prioritized action plans.
-version: 1.0.0
-author: geo-seo-claude
-tags: [geo, pdf, report, client-deliverable, professional]
+description: Render the Prompt-Ready LLM-Readiness Report as an A4 PDF from scores.json using ReportLab (five dimensions × 20, score gauge, dimension chart, crawler table, findings, roadmap, rubric appendix).
+version: 3.0.0
+tags: [geo, pdf, report, client-deliverable, prompt-ready]
 ---
 
-# GEO PDF Report Generator
-
-## Purpose
-
-This skill generates a professional, visually polished PDF report from GEO audit data. The PDF includes score gauges, bar charts, platform readiness visualizations, color-coded tables, and a prioritized action plan — ready to deliver directly to clients.
+# Prompt-Ready PDF Report (v3.0)
 
 ## Prerequisites
 
-- **ReportLab** must be installed: `pip install reportlab`
-- The PDF generation script is located at: `~/.claude/skills/geo/scripts/generate_pdf_report.py`
-- Run a full GEO audit first (using `/geo-audit`) to have data to include in the report
+- `pip install reportlab`
+- Script: `~/.claude/skills/geo/scripts/generate_pdf_report.py` (A4, Prompt-Ready palette)
+- A completed audit: `geo-reports/<domain>/scores.json` **and** the client report
+  `GEO-CLIENT-REPORT-<date>.md` (for the executive summary and findings text).
 
-## How to Generate a PDF Report
+Never build the PDF from a markdown report alone — scores come from
+`scores.json`, text comes from the client report.
 
-### Step 1: Collect Audit Data
-
-After running a full `/geo-audit`, collect all scores, findings, and recommendations into a JSON structure. The JSON data must follow this schema:
+## Input JSON for the script
 
 ```json
 {
-    "url": "https://example.com",
-    "brand_name": "Example Company",
-    "date": "2026-02-18",
-    "geo_score": 65,
-    "scores": {
-        "ai_citability": 62,
-        "brand_authority": 78,
-        "content_eeat": 74,
-        "technical": 72,
-        "schema": 45,
-        "platform_optimization": 59
-    },
-    "platforms": {
-        "Google AI Overviews": 68,
-        "ChatGPT": 62,
-        "Perplexity": 55,
-        "Gemini": 60,
-        "Bing Copilot": 50
-    },
-    "executive_summary": "A 4-6 sentence summary of the audit findings...",
-    "findings": [
-        {
-            "severity": "critical",
-            "title": "Finding Title",
-            "description": "Description of the finding and its impact."
-        }
-    ],
-    "quick_wins": [
-        "Action item 1",
-        "Action item 2"
-    ],
-    "medium_term": [
-        "Action item 1",
-        "Action item 2"
-    ],
-    "strategic": [
-        "Action item 1",
-        "Action item 2"
-    ],
-    "crawler_access": {
-        "GPTBot": {"platform": "ChatGPT", "status": "Allowed", "recommendation": "Keep allowed"},
-        "ClaudeBot": {"platform": "Claude", "status": "Blocked", "recommendation": "Unblock for visibility"}
-    }
+  "url": "https://example.com",
+  "brand_name": "Example",
+  "date": "2026-11-09",
+  "geo_score": 46,
+  "scores": {
+    "structure": 9,
+    "content": 12,
+    "technical": 11,
+    "ai_readiness": 8,
+    "brand": 6
+  },
+  "executive_summary": "4-6 sentences from the client report. Facts only.",
+  "findings": [
+    {"severity": "critical|high|medium|low", "title": "C1 — noindex on homepage",
+     "description": "Measured: <meta name=\"robots\" content=\"noindex\"> present in raw HTML of /."}
+  ],
+  "quick_wins": ["Remove noindex (C1, +4 pts)"],
+  "medium_term": ["…"],
+  "strategic": ["…"],
+  "crawler_access": {
+    "GPTBot": {"platform": "ChatGPT", "status": "Allowed|Blocked|403", "recommendation": "…"}
+  }
 }
 ```
 
-### Step 2: Write JSON Data to a Temp File
+`geo_score` must equal the sum of the five `scores`; the script will warn and
+use the sum if it does not. `scores.*` are 0-20. Do not pass `platforms` (legacy
+v2 field); the live visibility test lives in the client report, not the PDF
+chart.
 
-Write the collected audit data to a temporary JSON file:
+## Steps
 
-```bash
-# Write audit data to temp file
-cat > /tmp/geo-audit-data.json << 'EOF'
-{ ... audit JSON data ... }
-EOF
-```
-
-### Step 3: Generate the PDF
-
-Run the PDF generation script:
-
-```bash
-python3 ~/.claude/skills/geo/scripts/generate_pdf_report.py /tmp/geo-audit-data.json GEO-REPORT-[brand].pdf
-```
-
-The script will produce a professional PDF report with:
-- **Cover Page** — Brand name, URL, date, overall GEO score with visual gauge
-- **Executive Summary** — Key findings and top recommendations
-- **Score Breakdown** — Table and bar chart of all 6 scoring categories
-- **AI Platform Readiness** — Visual horizontal bar chart per platform with scores
-- **AI Crawler Access** — Color-coded table (green=allowed, red=blocked)
-- **Key Findings** — Severity-coded findings list (critical/high/medium/low)
-- **Prioritized Action Plan** — Quick wins, medium-term, and strategic initiatives
-- **Appendix** — Methodology, data sources, and glossary
-
-### Step 4: Return the PDF Path
-
-After generation, tell the user where the PDF was saved and its file size.
-
-## Complete Workflow Example
-
-When the user runs this skill, follow this exact sequence:
-
-1. **Check for existing audit data** — Look for recent GEO audit reports in the current directory:
-   - `GEO-CLIENT-REPORT.md`
-   - `GEO-AUDIT-REPORT.md`
-   - Or any `GEO-*.md` files from a recent audit
-
-2. **If no audit data exists** — Tell the user to run `/geo-audit <url>` first, then come back for the PDF.
-
-3. **If audit data exists** — Parse the markdown report to extract:
-   - Overall GEO score
-   - Category scores (citability, brand authority, content/E-E-A-T, technical, schema, platform)
-   - Platform readiness scores (Google AIO, ChatGPT, Perplexity, Gemini, Bing Copilot)
-   - AI crawler access status
-   - Key findings with severity levels
-   - Quick wins, medium-term, and strategic action items
-   - Executive summary
-
-4. **Build the JSON** — Structure all data into the JSON schema shown above.
-
-5. **Write JSON to temp file** — Save to `/tmp/geo-audit-data.json`
-
-6. **Run the PDF generator**:
+1. Build the JSON above from `scores.json` + the client report.
+   Each finding title starts with its check id (e.g. "E1 — …") and each
+   description starts with `Measured:` / `Assessed:` / `Unverifiable:`.
+2. Save to `geo-reports/<domain>/pdf-data.json`.
+3. Run:
    ```bash
-   python3 ~/.claude/skills/geo/scripts/generate_pdf_report.py /tmp/geo-audit-data.json "GEO-REPORT-[brand_name].pdf"
+   python3 ~/.claude/skills/geo/scripts/generate_pdf_report.py \
+     geo-reports/<domain>/pdf-data.json \
+     "geo-reports/<domain>/LLM-Readiness-<domain>-<date>.pdf"
    ```
-
-7. **Report success** — Tell the user the PDF was generated, its location, and file size.
-
-## If the User Provides a URL
-
-If the user runs `/geo-report-pdf https://example.com` with a URL:
-1. First run a full audit: invoke the `geo-audit` skill for that URL
-2. Then collect all the audit data from the generated report files
-3. Generate the PDF as described above
-
-## Parsing Markdown Audit Data
-
-When extracting data from existing GEO markdown reports, look for these patterns:
-
-- **GEO Score**: Look for "GEO Score: XX/100" or "Overall: XX/100" or "GEO Readiness Score: XX"
-- **Category Scores**: Look for score tables with columns like "Component | Score | Weight"
-- **Platform Scores**: Look for tables with "Google AI Overviews", "ChatGPT", "Perplexity", etc.
-- **Crawler Status**: Look for tables with "Allowed" or "Blocked" status for crawlers like GPTBot, ClaudeBot
-- **Findings**: Look for sections titled "Key Findings", "Critical Issues", "Recommendations"
-- **Action Items**: Look for sections titled "Quick Wins", "Action Plan", "Recommendations"
+4. Report the path and size. Open the PDF (Read tool) and check: total equals
+   the dimension sum, labels match `scoring.md` §8, no legacy six-category table.
 
 ## Notes
 
-- If ReportLab is not installed, run: `pip install reportlab`
-- The PDF is designed for US Letter size (8.5" x 11")
-- Color palette: Navy primary (#1a1a2e), Blue accent (#0f3460), Coral highlight (#e94560), Green success (#00b894)
-- Each page has a header line, page numbers, "Confidential" watermark, and generation date
-- Score gauges use traffic-light colors: green (80+), blue (60-79), yellow (40-59), red (below 40)
+- Paper: A4. Palette: dark `#111827`, indigo `#4F46E5`, orange `#F97316`.
+- Score colours in the gauge and tables use the v3 bands (80/60/40/20).
+- Statistics in `executive_summary` must be verified in `geo/references.md`.

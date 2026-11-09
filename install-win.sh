@@ -6,7 +6,7 @@ set -euo pipefail
 # Run this script from Git Bash, NOT PowerShell or CMD.
 # ============================================================
 
-REPO_URL="https://github.com/zubair-trabzada/geo-seo-claude.git"
+REPO_URL="<set-your-repo-url>"
 CLAUDE_DIR="${HOME}/.claude"
 SKILLS_DIR="${CLAUDE_DIR}/skills"
 AGENTS_DIR="${CLAUDE_DIR}/agents"
@@ -300,14 +300,13 @@ main() {
     echo "    /geo crawlers <url>   AI crawler access check"
     echo "    /geo llmstxt <url>    Analyze/generate llms.txt"
     echo "    /geo brands <url>     Brand mention scan"
-    echo "    /geo platforms <url>  Platform-specific optimization"
     echo "    /geo schema <url>     Structured data analysis"
     echo "    /geo technical <url>  Technical SEO audit"
     echo "    /geo content <url>    Content quality & E-E-A-T"
     echo "    /geo report <url>     Client-ready GEO report"
     echo "    /geo report-pdf       Generate PDF report from audit data"
     echo ""
-    echo "  Documentation: https://github.com/zubair-trabzada/geo-seo-claude"
+    echo "  Documentation: https://www.prompt-ready.com/"
     echo ""
 }
 

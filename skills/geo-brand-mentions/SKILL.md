@@ -10,6 +10,14 @@ allowed-tools:
   - Write
 ---
 
+> **Scoring (v3.0):** the only scores that enter any report are the checks defined in
+> `geo/scoring.md` (five dimensions × 20 points). The point tables, weights and score
+> labels that remain in this file are **legacy analysis guidance** — use them to decide
+> what to look at and how to write recommendations, never to produce a score. Statistics
+> quoted in this file are **not verified**; see `geo/references.md` before using any of
+> them in client output. Fetch data with `scripts/fetch_page.py`, not WebFetch, for any
+> measured check.
+
 # Brand Mention Scanner Skill
 
 ## Core Insight
@@ -317,7 +325,7 @@ If competitors are identified, do a quick scan of their platform presence for co
 
 ## Output Format
 
-Generate a file called `GEO-BRAND-MENTIONS.md`:
+Generate a file called `geo-reports/GEO-BRAND-MENTIONS.md`:
 
 ```markdown
 # Brand Authority Report: [Brand Name]
